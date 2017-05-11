@@ -5,8 +5,8 @@ Search Lyrics from azlyrics and wikia with spotify link
 
 Requires : python3.4+ , telepot and spotipy
 
-![Screenshot](screenshots/dylan.png)
-![Screenshot](screenshots/namjoo.png)
+![Screenshot](https://raw.githubusercontent.com/hamedafra/Telyrics/master/screenshots/dylan.jpg)
+![Screenshot](https://raw.githubusercontent.com/hamedafra/Telyrics/master/screenshots/namjoo.jpg)
 
 
 
