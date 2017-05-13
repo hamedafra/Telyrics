@@ -27,7 +27,7 @@ class lyrics(telepot.helper.ChatHandler):
             self._editor = None
     def open(self, initial_msg, seed):
         self.sender.sendMessage('Enter a search query to continue...')
-        #return True  # prevent on_message() from being called on the initial message
+        return True  # prevent on_message() from being called on the initial message
     def on_chat_message(self , msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
         search = msg['text']
