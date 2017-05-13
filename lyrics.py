@@ -287,6 +287,7 @@ class lyrics(telepot.helper.ChatHandler):
         lyrics = resp
         return lyrics
 
+    
 TOKEN = sys.argv[1]
 
 bot = telepot.DelegatorBot(TOKEN, [
