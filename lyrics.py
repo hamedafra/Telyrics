@@ -117,22 +117,23 @@ class lyrics(telepot.helper.ChatHandler):
             azlyrics = self.get_azlyrics(results['artists'][0]['name'], results['name'])
             wikia = self.get_wikia(results['artists'][0]['name'], results['name'])
 
-            if musixmatch:
+            if musixmatch :
                 sent = self.sender.sendMessage(musixmatch)
                 self._editor = telepot.helper.Editor(self.bot, sent)
                 self._edit_msg_ident = telepot.message_identifier(sent)
 
-            elif azlyrics:
+            elif azlyrics :
                 sent = self.sender.sendMessage(azlyrics)
                 self._editor = telepot.helper.Editor(self.bot, sent)
                 self._edit_msg_ident = telepot.message_identifier(sent)
-
             elif wikia:
+
                 sent = self.sender.sendMessage(wikia)
                 self._editor = telepot.helper.Editor(self.bot, sent)
                 self._edit_msg_ident = telepot.message_identifier(sent)
 
             else:
+
                 sent = self.sender.sendMessage("No lyrics found :(")
                 self._editor = telepot.helper.Editor(self.bot, sent)
                 self._edit_msg_ident = telepot.message_identifier(sent)
@@ -174,9 +175,13 @@ class lyrics(telepot.helper.ChatHandler):
             print("could not connect to Musixmatch")
             return ""
 
+
         # cut HTML source to relevant part
-        start = re.search('<p class="mxm-lyrics__content " data-reactid="\d*">', resp).end()
-        if start == -1:
+        regex = re.search('<p class="mxm-lyrics__content " data-reactid="\d*">', resp)
+
+        if regex:
+            start = regex.end()
+        else:
             print("lyrics start not found")
             return ""
         resp = resp[start:]
@@ -191,6 +196,7 @@ class lyrics(telepot.helper.ChatHandler):
 
         print (resp)
         lyrics = resp
+
         return lyrics
 
     def get_azlyrics(self, artist, title):
@@ -295,7 +301,7 @@ class lyrics(telepot.helper.ChatHandler):
         lyrics = resp
         return lyrics
 
-    
+
 TOKEN = sys.argv[1]
 
 bot = telepot.DelegatorBot(TOKEN, [
