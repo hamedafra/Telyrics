@@ -153,8 +153,8 @@ class lyrics(telepot.helper.ChatHandler):
         title = title.replace(" ", "-")
         clean_artist = urllib.parse.quote(artist)
         clean_title = urllib.parse.quote(title)
-        clean_title = re.sub('_-\w*remastered\w*', '', clean_title,flags=re.IGNORECASE)
-        clean_title = re.sub('_-\w*remix\w*', '', clean_title, flags=re.IGNORECASE)
+        clean_title = re.sub('--.*remaste.*', '', clean_title,flags=re.IGNORECASE)
+        clean_title = re.sub('--.*remix.*', '', clean_title, flags=re.IGNORECASE)
 
         # create lyrics Url
         url = "https://www.musixmatch.com/lyrics/" + clean_artist + "/" + clean_title
@@ -200,7 +200,7 @@ class lyrics(telepot.helper.ChatHandler):
         clean_title = clean_title.replace(" ", "")
         clean_title = self.remove_punctuation(clean_title)
         clean_title = clean_title.lower()
-        clean_title = re.sub('-\w*remastered\w*', '', clean_title)
+        clean_title = re.sub('-\w*remaster\w*', '', clean_title)
         clean_title = re.sub('-\w*remix\w*', '', clean_title)
 
 
@@ -249,7 +249,7 @@ class lyrics(telepot.helper.ChatHandler):
         title = title.replace(" ", "_")
         clean_artist = urllib.parse.quote(artist)
         clean_title = urllib.parse.quote(title)
-        clean_title = re.sub('_-\w*remastered\w*', '', clean_title,flags=re.IGNORECASE)
+        clean_title = re.sub('_-\w*remaster\w*', '', clean_title,flags=re.IGNORECASE)
         clean_title = re.sub('_-\w*remix\w*', '', clean_title, flags=re.IGNORECASE)
 
         # create lyrics Url
