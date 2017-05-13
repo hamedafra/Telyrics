@@ -30,7 +30,8 @@ class lyrics(telepot.helper.ChatHandler):
         return True  # prevent on_message() from being called on the initial message
     def on_chat_message(self , msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
-        search = msg['text']
+        if '/start' not in msg['text'] :
+            search = msg['text']
         search.replace(" ", "+")   
         spotify = spotipy.Spotify()
         self._results  = spotify.search(q=search, type='track', limit='50')
