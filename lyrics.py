@@ -112,10 +112,14 @@ class lyrics(telepot.helper.ChatHandler):
             sent = self.sender.sendMessage(results['external_urls']['spotify'])
             self._editor = telepot.helper.Editor(self.bot, sent)
             self._edit_msg_ident = telepot.message_identifier(sent)
+            musixmatch = self.get_musixmatch(results['artists'][0]['name'], results['name'])
             azlyrics = self.get_azlyrics(results['artists'][0]['name'], results['name'])
             wikia = self.get_wikia(results['artists'][0]['name'], results['name'])
 
-            if azlyrics :
+            if musixmatch :
+                self.sender.sendMessage(musixmatch)
+
+            elif azlyrics :
                 self.sender.sendMessage(azlyrics)
             elif wikia:
 
@@ -138,6 +142,48 @@ class lyrics(telepot.helper.ChatHandler):
             data = data.replace(c, "")
 
             return data
+
+    def get_musixmatch(self,artist, title):
+
+        # format artist and title
+
+        artist = artist.replace(" ", "-")
+        artist = re.sub("ebi","Ebi-2", artist,flags=re.IGNORECASE) # change Ebi to Ebi-2 ( an Iranian artist)
+        title = title.replace(" ", "-")
+        clean_artist = urllib.parse.quote(artist)
+        clean_title = urllib.parse.quote(title)
+        clean_title = re.sub('_-\w*remastered\w*', '', clean_title,flags=re.IGNORECASE)
+        clean_title = re.sub('_-\w*remix\w*', '', clean_title, flags=re.IGNORECASE)
+
+        # create lyrics Url
+        url = "https://www.musixmatch.com/lyrics/" + clean_artist + "/" + clean_title
+        print("Musixmatch Url " + url)
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/6.0'})
+            resp = urllib.request.urlopen(req).read().decode('utf-8')
+
+        except:
+            print("could not connect to Musixmatch")
+            return ""
+
+        # cut HTML source to relevant part
+        start = re.search('<p class="mxm-lyrics__content " data-reactid="\d*">', resp).end()
+        if start == -1:
+            print("lyrics start not found")
+            return ""
+        resp = resp[start:]
+
+        # replace unwanted parts
+        resp = html.unescape(resp)
+        resp = re.sub('<p class="mxm-lyrics__copyright" data-reactid="\d*">', "\n\n", resp)
+        resp = re.sub('🇮🇹 Made with love & passion in Italy.\n\s+🌎 Enjoyed everywhere', '', resp)
+        resp = re.sub('<script[\s\S]+?/script>', "\n", resp)
+        resp = re.sub("<.*>", "", resp)
+        resp = resp.strip()
+
+        print (resp)
+        lyrics = resp
+        return lyrics
 
     def get_azlyrics(self, artist, title):
 
@@ -240,7 +286,6 @@ class lyrics(telepot.helper.ChatHandler):
         print (resp)
         lyrics = resp
         return lyrics
-
 
 TOKEN = sys.argv[1]
 
