@@ -117,18 +117,25 @@ class lyrics(telepot.helper.ChatHandler):
             azlyrics = self.get_azlyrics(results['artists'][0]['name'], results['name'])
             wikia = self.get_wikia(results['artists'][0]['name'], results['name'])
 
-            if musixmatch :
-                self.sender.sendMessage(musixmatch)
+            if musixmatch:
+                sent = self.sender.sendMessage(musixmatch)
+                self._editor = telepot.helper.Editor(self.bot, sent)
+                self._edit_msg_ident = telepot.message_identifier(sent)
 
-            elif azlyrics :
-                self.sender.sendMessage(azlyrics)
+            elif azlyrics:
+                sent = self.sender.sendMessage(azlyrics)
+                self._editor = telepot.helper.Editor(self.bot, sent)
+                self._edit_msg_ident = telepot.message_identifier(sent)
+
             elif wikia:
-
-                self.sender.sendMessage(wikia)
+                sent = self.sender.sendMessage(wikia)
+                self._editor = telepot.helper.Editor(self.bot, sent)
+                self._edit_msg_ident = telepot.message_identifier(sent)
 
             else:
-
-                self.sender.sendMessage("No lyrics found :(")
+                sent = self.sender.sendMessage("No lyrics found :(")
+                self._editor = telepot.helper.Editor(self.bot, sent)
+                self._edit_msg_ident = telepot.message_identifier(sent)
 
     def on__idle(self, event):
         self.sender.sendMessage('Session expired. Please try again')
