@@ -6,7 +6,7 @@ import math
 import telepot
 import telepot.helper
 import spotipy
-import goslate
+from textblob.blob import TextBlob
 import urllib.request, urllib.error, urllib.parse
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 from telepot.delegate import (
@@ -111,7 +111,7 @@ class lyrics(telepot.helper.ChatHandler):
             elif 'wikia' in query_data:
                 self.get_translate(self.wikia)
 
-        if 'page:' in query_data:
+        elif 'page:' in query_data:
 
             current = re.findall('\d+', query_data)
             inlinekeyboards = []
@@ -137,18 +137,21 @@ class lyrics(telepot.helper.ChatHandler):
             self.wikia = self.get_wikia(results['artists'][0]['name'], results['name'])
 
             if self.musixmatch:
-                keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Translate to Persian", callback_data='text:'+ 'musixmatch')]])
+
+                keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Translate", callback_data='text:'+ 'musixmatch')]])
                 sent = self.sender.sendMessage(self.musixmatch,reply_markup=keyboard)
                 self._editor = telepot.helper.Editor(self.bot, sent)
                 self._edit_msg_ident = telepot.message_identifier(sent)
 
             elif self.azlyrics:
-                keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Translate to Persian", callback_data='text:'+ 'azlyrics')]])
+
+                keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Translate", callback_data='text:'+ 'azlyrics')]])
                 sent = self.sender.sendMessage(self.azlyrics,reply_markup=keyboard)
                 self._editor = telepot.helper.Editor(self.bot, sent)
                 self._edit_msg_ident = telepot.message_identifier(sent)
             elif self.wikia:
-                keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Translate to Persian", callback_data='text:'+ 'wikia')]])
+
+                keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Translate", callback_data='text:'+ 'wikia')]])
                 sent = self.sender.sendMessage(self.wikia,reply_markup=keyboard)
                 self._editor = telepot.helper.Editor(self.bot, sent)
                 self._edit_msg_ident = telepot.message_identifier(sent)
@@ -170,9 +173,13 @@ class lyrics(telepot.helper.ChatHandler):
 
     def get_translate(self, text):
         text = text.replace("text:", "")
-        gs = goslate.Goslate()
-        sentp = gs.translate(text, 'fa')
-        sent = self.sender.sendMessage(sentp)
+        blob = TextBlob(text)
+        lan = blob.detect_language()
+        if lan != 'en':
+            sentp = blob.translate(to="en")
+        else:
+            sentp = blob.translate(to="fa")
+        sent = self.sender.sendMessage(str(sentp))
         self._editor = telepot.helper.Editor(self.bot, sent)
         self._edit_msg_ident = telepot.message_identifier(sent)
 
