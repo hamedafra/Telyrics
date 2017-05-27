@@ -6,15 +6,17 @@ import math
 import telepot
 import telepot.helper
 import spotipy
+import goslate
 import urllib.request, urllib.error, urllib.parse
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 from telepot.delegate import (
     per_chat_id, create_open, pave_event_space, include_callback_query_chat_id)
+
 propose_records = telepot.helper.SafeDict()  # thread-safe dict
 spotify = spotipy.Spotify()
 
+
 class lyrics(telepot.helper.ChatHandler):
-   
     def __init__(self, *args, **kwargs):
         super(lyrics, self).__init__(*args, **kwargs)
         # Retrieve from database
@@ -25,83 +27,100 @@ class lyrics(telepot.helper.ChatHandler):
         else:
             self._edit_msg_ident = None
             self._editor = None
+
     def open(self, initial_msg, seed):
         self.sender.sendMessage('Enter a search query to continue...')
         return True  # prevent on_message() from being called on the initial message
-    def on_chat_message(self , msg):
+
+    def on_chat_message(self, msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
-        if '/start' not in msg['text'] :
+        if '/start' not in msg['text']:
             search = msg['text']
-        search.replace(" ", "+")   
+        search.replace(" ", "+")
         spotify = spotipy.Spotify()
-        self._results  = spotify.search(q=search, type='track', limit='50')
-        pages = math.ceil(len(self._results['tracks']['items'])/3)
+        self._results = spotify.search(q=search, type='track', limit='50')
+        pages = math.ceil(len(self._results['tracks']['items']) / 3)
         inlinekeyboards = []
 
         if pages == 1:
             for track in self._results['tracks']['items']:
-                trackname = track['artists'][0]['name']+' -'+' '+ track['name']
+                trackname = track['artists'][0]['name'] + ' -' + ' ' + track['name']
                 inlinekeyboards.append([InlineKeyboardButton(text=trackname, callback_data=track['uri'])])
                 keyboard = InlineKeyboardMarkup(inline_keyboard=inlinekeyboards)
-            self.print_search(keyboard,msg)
-        elif pages >  1:
+            self.print_search(keyboard, msg)
+        elif pages > 1:
             for track in self._results['tracks']['items'][:3]:
-                trackname = track['artists'][0]['name']+' -'+' '+ track['name']
+                trackname = track['artists'][0]['name'] + ' -' + ' ' + track['name']
                 inlinekeyboards.append([InlineKeyboardButton(text=trackname, callback_data=track['uri'])])
             current = 1
-            pagekeyboard = self.get_pagination(current,pages) 
+            pagekeyboard = self.get_pagination(current, pages)
             inlinekeyboards.append(pagekeyboard)
             keyboard = InlineKeyboardMarkup(inline_keyboard=inlinekeyboards)
             self.print_search(keyboard, msg)
 
-    def get_pagination(self,current,pages):
+    def get_pagination(self, current, pages):
         pagination = []
-        if pages >4:
-                printed = 0
-                if current > 1 :
-                        pagination.append(InlineKeyboardButton(text='«1', callback_data='page:1'))
-                if current > 2 :
-                        pagination.append(InlineKeyboardButton(text='‹'+str(current - 1), callback_data='page:'+str(current - 1)))
-                pagination.append(InlineKeyboardButton(text='.'+str(current)+'.', callback_data='current:'+str(current)))
-                printed = current
-                for x in range(printed+1,4):
-                        pagination.append(InlineKeyboardButton(text=str(x), callback_data='page:'+str(x)))
-                        printed = x
-                if current < pages - 1:
-                        pagination.append(InlineKeyboardButton(text=str(printed + 1) +'›', callback_data='page:'+str(printed + 1)))
-                if current < pages:
-                        pagination.append(InlineKeyboardButton(text=str(pages)+'»', callback_data='page:'+str(pages)))
+        if pages > 4:
+            printed = 0
+            if current > 1:
+                pagination.append(InlineKeyboardButton(text='«1', callback_data='page:1'))
+            if current > 2:
+                pagination.append(
+                    InlineKeyboardButton(text='‹' + str(current - 1), callback_data='page:' + str(current - 1)))
+            pagination.append(
+                InlineKeyboardButton(text='.' + str(current) + '.', callback_data='current:' + str(current)))
+            printed = current
+            for x in range(printed + 1, 4):
+                pagination.append(InlineKeyboardButton(text=str(x), callback_data='page:' + str(x)))
+                printed = x
+            if current < pages - 1:
+                pagination.append(
+                    InlineKeyboardButton(text=str(printed + 1) + '›', callback_data='page:' + str(printed + 1)))
+            if current < pages:
+                pagination.append(InlineKeyboardButton(text=str(pages) + '»', callback_data='page:' + str(pages)))
 
         else:
-                for x in range(1, current):
-                        pagination.append(InlineKeyboardButton(text=str(x), callback_data='page:'+str(x)))
-                pagination.append(InlineKeyboardButton(text='.'+str(current)+'.', callback_data='current:'+str(current)))
-                for x in range(current+1,pages+1):
-                        pagination.append(InlineKeyboardButton(text=str(x), callback_data='page:'+str(x)))
+            for x in range(1, current):
+                pagination.append(InlineKeyboardButton(text=str(x), callback_data='page:' + str(x)))
+            pagination.append(
+                InlineKeyboardButton(text='.' + str(current) + '.', callback_data='current:' + str(current)))
+            for x in range(current + 1, pages + 1):
+                pagination.append(InlineKeyboardButton(text=str(x), callback_data='page:' + str(x)))
         return pagination
-        
-    def print_search(self , keyboard,msg):
-        sent = self.sender.sendMessage("Showing results for '"+msg['text']+"'", reply_markup=keyboard)
+
+    def print_search(self, keyboard, msg):
+        sent = self.sender.sendMessage("Showing results for '" + msg['text'] + "'", reply_markup=keyboard)
         self._editor = telepot.helper.Editor(self.bot, sent)
         self._edit_msg_ident = telepot.message_identifier(sent)
+
     def _cancel_last(self):
         if self._editor:
             self._editor.editMessageReplyMarkup(reply_markup=None)
             self._editor = None
             self._edit_msg_ident = None
-    def on_callback_query(self, msg  ):
+
+    def on_callback_query(self, msg):
         query_id, from_id, query_data = telepot.glance(msg, flavor='callback_query')
 
-        if 'page:' in query_data :
+        if 'text:' in query_data:
+
+            if 'musixmatch' in query_data:
+              self.get_translate(self.musixmatch)
+            elif 'azlyrics' in query_data:
+                self.get_translate(self.azlyrics)
+            elif 'wikia' in query_data:
+                self.get_translate(self.wikia)
+
+        if 'page:' in query_data:
 
             current = re.findall('\d+', query_data)
             inlinekeyboards = []
             pages = math.ceil(len(self._results['tracks']['items']) / 3)
             index = (int(current[0]) - 1) * 3
-            for track in self._results['tracks']['items'][index:index+3]:
-                trackname = track['artists'][0]['name']+' -'+' '+ track['name']
+            for track in self._results['tracks']['items'][index:index + 3]:
+                trackname = track['artists'][0]['name'] + ' -' + ' ' + track['name']
                 inlinekeyboards.append([InlineKeyboardButton(text=trackname, callback_data=track['uri'])])
-            pagekeyboard = self.get_pagination(int(current[0]),pages)
+            pagekeyboard = self.get_pagination(int(current[0]), pages)
             inlinekeyboards.append(pagekeyboard)
             keyboard = InlineKeyboardMarkup(inline_keyboard=inlinekeyboards)
             self._editor.editMessageReplyMarkup(reply_markup=keyboard)
@@ -113,27 +132,24 @@ class lyrics(telepot.helper.ChatHandler):
             sent = self.sender.sendMessage(results['external_urls']['spotify'])
             self._editor = telepot.helper.Editor(self.bot, sent)
             self._edit_msg_ident = telepot.message_identifier(sent)
-            musixmatch = self.get_musixmatch(results['artists'][0]['name'], results['name'])
-            azlyrics = self.get_azlyrics(results['artists'][0]['name'], results['name'])
-            wikia = self.get_wikia(results['artists'][0]['name'], results['name'])
+            self.musixmatch = self.get_musixmatch(results['artists'][0]['name'], results['name'])
+            self.azlyrics = self.get_azlyrics(results['artists'][0]['name'], results['name'])
+            self.wikia = self.get_wikia(results['artists'][0]['name'], results['name'])
 
-            if musixmatch :
-                gs = goslate.Goslate()
-                sentp=(gs.translate(self.sender.sendMessage(musixmatch), 'fa'))
-                sent = self.sender.sendMessage(musixmatch)
+            if self.musixmatch:
+                keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Translate to Persian", callback_data='text:'+ 'musixmatch')]])
+                sent = self.sender.sendMessage(self.musixmatch,reply_markup=keyboard)
                 self._editor = telepot.helper.Editor(self.bot, sent)
                 self._edit_msg_ident = telepot.message_identifier(sent)
 
-            elif azlyrics :
-                gs = goslate.Goslate()
-                sentp=(gs.translate(self.sender.sendMessage(azlyrics), 'fa'))                
-                sent = self.sender.sendMessage(azlyrics)
+            elif self.azlyrics:
+                keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Translate to Persian", callback_data='text:'+ 'azlyrics')]])
+                sent = self.sender.sendMessage(self.azlyrics,reply_markup=keyboard)
                 self._editor = telepot.helper.Editor(self.bot, sent)
                 self._edit_msg_ident = telepot.message_identifier(sent)
-            elif wikia:
-                gs = goslate.Goslate()
-                sentp=(gs.translate(self.sender.sendMessage(wikia), 'fa'))
-                sent = self.sender.sendMessage(wikia)
+            elif self.wikia:
+                keyboard = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Translate to Persian", callback_data='text:'+ 'wikia')]])
+                sent = self.sender.sendMessage(self.wikia,reply_markup=keyboard)
                 self._editor = telepot.helper.Editor(self.bot, sent)
                 self._edit_msg_ident = telepot.message_identifier(sent)
 
@@ -146,27 +162,36 @@ class lyrics(telepot.helper.ChatHandler):
     def on__idle(self, event):
         self.sender.sendMessage('Session expired. Please try again')
         self.close()
+
     def on_close(self, ex):
-        #Save to database
+        # Save to database
         global propose_records
         propose_records[self.id] = (self._edit_msg_ident)
 
-    def remove_punctuation(self,data):
+    def get_translate(self, text):
+        text = text.replace("text:", "")
+        gs = goslate.Goslate()
+        sentp = gs.translate(text, 'fa')
+        sent = self.sender.sendMessage(sentp)
+        self._editor = telepot.helper.Editor(self.bot, sent)
+        self._edit_msg_ident = telepot.message_identifier(sent)
+
+    def remove_punctuation(self, data):
         for c in string.punctuation:
             data = data.replace(c, "")
 
             return data
 
-    def get_musixmatch(self,artist, title):
+    def get_musixmatch(self, artist, title):
 
         # format artist and title
 
         artist = artist.replace(" ", "-")
-        artist = re.sub("ebi","Ebi-2", artist,flags=re.IGNORECASE) # change Ebi to Ebi-2 ( an Iranian artist)
+        artist = re.sub("ebi", "Ebi-2", artist, flags=re.IGNORECASE)  # change Ebi to Ebi-2 ( an Iranian artist)
         title = title.replace(" ", "-")
         clean_artist = urllib.parse.quote(artist)
         clean_title = urllib.parse.quote(title)
-        clean_title = re.sub('--.*remaste.*', '', clean_title,flags=re.IGNORECASE)
+        clean_title = re.sub('--.*remaste.*', '', clean_title, flags=re.IGNORECASE)
         clean_title = re.sub('--.*remix.*', '', clean_title, flags=re.IGNORECASE)
 
         # create lyrics Url
@@ -179,7 +204,6 @@ class lyrics(telepot.helper.ChatHandler):
         except:
             print("could not connect to Musixmatch")
             return ""
-
 
         # cut HTML source to relevant part
         regex = re.search('<p class="mxm-lyrics__content " data-reactid="\d*">', resp)
@@ -221,8 +245,6 @@ class lyrics(telepot.helper.ChatHandler):
         clean_title = re.sub('-\w*remaster\w*', '', clean_title)
         clean_title = re.sub('-\w*remix\w*', '', clean_title)
 
-
-
         # create lyrics Url
         url = "http://www.azlyrics.com/lyrics/" + clean_artist + "/" + clean_title + ".html"
         print("azlyrics Url " + url)
@@ -232,7 +254,6 @@ class lyrics(telepot.helper.ChatHandler):
         except:
             print("could not connect to azlyrics.com")
             return ""
-
 
         start = resp.find("that. -->")
         if start == -1:
@@ -258,16 +279,14 @@ class lyrics(telepot.helper.ChatHandler):
 
         return lyrics
 
-
-
-    def get_wikia(self,artist, title):
+    def get_wikia(self, artist, title):
 
         # format artist and title
         artist = artist.replace(" ", "_")
         title = title.replace(" ", "_")
         clean_artist = urllib.parse.quote(artist)
         clean_title = urllib.parse.quote(title)
-        clean_title = re.sub('_-\w*remaster\w*', '', clean_title,flags=re.IGNORECASE)
+        clean_title = re.sub('_-\w*remaster\w*', '', clean_title, flags=re.IGNORECASE)
         clean_title = re.sub('_-\w*remix\w*', '', clean_title, flags=re.IGNORECASE)
 
         # create lyrics Url
@@ -312,6 +331,6 @@ TOKEN = sys.argv[1]
 bot = telepot.DelegatorBot(TOKEN, [
     include_callback_query_chat_id(
         pave_event_space())(
-            per_chat_id(types=['private']), create_open, lyrics, timeout=3600),
+        per_chat_id(types=['private']), create_open, lyrics, timeout=3600),
 ])
 bot.message_loop(run_forever='Listening ...')
