@@ -118,16 +118,21 @@ class lyrics(telepot.helper.ChatHandler):
             wikia = self.get_wikia(results['artists'][0]['name'], results['name'])
 
             if musixmatch :
+                gs = goslate.Goslate()
+                sentp=(gs.translate(self.sender.sendMessage(musixmatch), 'fa'))
                 sent = self.sender.sendMessage(musixmatch)
                 self._editor = telepot.helper.Editor(self.bot, sent)
                 self._edit_msg_ident = telepot.message_identifier(sent)
 
             elif azlyrics :
+                gs = goslate.Goslate()
+                sentp=(gs.translate(self.sender.sendMessage(azlyrics), 'fa'))                
                 sent = self.sender.sendMessage(azlyrics)
                 self._editor = telepot.helper.Editor(self.bot, sent)
                 self._edit_msg_ident = telepot.message_identifier(sent)
             elif wikia:
-
+                gs = goslate.Goslate()
+                sentp=(gs.translate(self.sender.sendMessage(wikia), 'fa'))
                 sent = self.sender.sendMessage(wikia)
                 self._editor = telepot.helper.Editor(self.bot, sent)
                 self._edit_msg_ident = telepot.message_identifier(sent)
