@@ -6,23 +6,25 @@ import math
 import telepot
 import telepot.helper
 import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 from textblob.blob import TextBlob
 import urllib.request, urllib.error, urllib.parse
 from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
 from telepot.delegate import (
     per_chat_id, create_open, pave_event_space, include_callback_query_chat_id)
 
-propose_records = telepot.helper.SafeDict()  # thread-safe dict
-spotify = spotipy.Spotify()
+telyrics = telepot.helper.SafeDict()  # thread-safe dict
 
+client_credentials_manager = SpotifyClientCredentials(client_id='YOUR CLIENT ID', client_secret='YOUR CLIENT SECRET', proxies=None)
+spotify = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
 class lyrics(telepot.helper.ChatHandler):
     def __init__(self, *args, **kwargs):
         super(lyrics, self).__init__(*args, **kwargs)
         # Retrieve from database
-        global propose_records
-        if self.id in propose_records:
-            self._edit_msg_ident = propose_records[self.id]
+        global telyrics
+        if self.id in telyrics:
+            self._edit_msg_ident = telyrics[self.id]
             self._editor = telepot.helper.Editor(self.bot, self._edit_msg_ident) if self._edit_msg_ident else None
         else:
             self._edit_msg_ident = None
@@ -37,7 +39,6 @@ class lyrics(telepot.helper.ChatHandler):
         if '/start' not in msg['text']:
             search = msg['text']
         search.replace(" ", "+")
-        spotify = spotipy.Spotify()
         self._results = spotify.search(q=search, type='track', limit='50')
         pages = math.ceil(len(self._results['tracks']['items']) / 3)
         inlinekeyboards = []
@@ -168,8 +169,8 @@ class lyrics(telepot.helper.ChatHandler):
 
     def on_close(self, ex):
         # Save to database
-        global propose_records
-        propose_records[self.id] = (self._edit_msg_ident)
+        global telyrics
+        telyrics[self.id] = (self._edit_msg_ident)
 
     def get_translate(self, text):
         text = text.replace("text:", "")
